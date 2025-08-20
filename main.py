@@ -3,21 +3,17 @@
 import os
 import bcrypt
 import jwt
+import mysql.connector # Import the base connector library
 from datetime import datetime, timedelta
 from functools import wraps
-# Add render_template to serve HTML files
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from dotenv import load_dotenv
 from mysql.connector import pooling
 
 # --- Initialization ---
-# Load environment variables from a .env file for security
 load_dotenv()
-
-# Create Flask app instance, specifying the template folder
 app = Flask(__name__, template_folder='templates')
-# Enable Cross-Origin Resource Sharing (CORS) to allow your frontend to talk to this API
 CORS(app)
 
 # --- Secret Key for JWT ---
@@ -35,85 +31,67 @@ try:
                                            pool_size=5,
                                            **db_config)
     print("Database connection pool created successfully.")
-except pooling.mysql.connector.Error as err:
+# --- CORRECTED ERROR HANDLING ---
+except mysql.connector.Error as err:
     print(f"FATAL: A MySQL error occurred: {err}")
     exit(1)
+# --- END CORRECTION ---
 except Exception as e:
     print(f"FATAL: A generic error occurred: {e}")
     exit(1)
 
 # --- Routes to Serve Frontend Pages ---
-
 @app.route('/')
 def serve_index():
-    """Serves the main task page."""
     return render_template('index.html')
 
 @app.route('/login')
 def serve_login():
-    """Serves the login page."""
     return render_template('login.html')
 
 @app.route('/register')
 def serve_register():
-    """Serves the registration page."""
     return render_template('register.html')
-
 
 # --- Authentication Decorator ---
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        if 'x-access-token' in request.headers:
-            token = request.headers['x-access-token']
-        
+        token = request.headers.get('x-access-token')
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
-        
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
             connection = cnx_pool.get_connection()
             cursor = connection.cursor(dictionary=True)
             cursor.execute("SELECT id, email FROM users WHERE id = %s", (data['user_id'],))
             current_user = cursor.fetchone()
-        except jwt.ExpiredSignatureError:
-            return jsonify({'message': 'Token has expired!'}), 401
-        except jwt.InvalidTokenError:
+        except Exception:
             return jsonify({'message': 'Token is invalid!'}), 401
-        except Exception as e:
-            return jsonify({'message': f'An error occurred: {e}'}), 500
         finally:
             if 'connection' in locals() and connection.is_connected():
                 cursor.close()
                 connection.close()
-
         if not current_user:
              return jsonify({'message': 'User not found!'}), 401
-
         return f(current_user, *args, **kwargs)
     return decorated
 
 # --- Authentication API Routes ---
-
 @app.route('/auth/register', methods=['POST'])
 def register_user():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-
     if not email or not password:
         return jsonify({'message': 'Email and password are required!'}), 400
-
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    
     try:
         connection = cnx_pool.get_connection()
         cursor = connection.cursor()
         cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
         if cursor.fetchone():
             return jsonify({'message': 'User with this email already exists!'}), 409
-        
         cursor.execute("INSERT INTO users (email, password_hash) VALUES (%s, %s)", (email, hashed_password.decode('utf-8')))
         connection.commit()
         return jsonify({'message': 'New user created successfully!'}), 201
@@ -127,28 +105,20 @@ def register_user():
 @app.route('/auth/login', methods=['POST'])
 def login_user():
     auth = request.get_json()
-
     if not auth or not auth.get('email') or not auth.get('password'):
         return jsonify({'message': 'Could not verify'}), 401
-    
     try:
         connection = cnx_pool.get_connection()
         cursor = connection.cursor(dictionary=True)
         cursor.execute("SELECT id, email, password_hash FROM users WHERE email = %s", (auth['email'],))
         user = cursor.fetchone()
-
-        if not user:
-            return jsonify({'message': 'User not found!'}), 401
-
-        if bcrypt.checkpw(auth['password'].encode('utf-8'), user['password_hash'].encode('utf-8')):
-            token = jwt.encode({
-                'user_id': user['id'],
-                'exp': datetime.utcnow() + timedelta(hours=24)
-            }, app.config['SECRET_KEY'], algorithm="HS256")
-            
-            return jsonify({'token': token})
-        
-        return jsonify({'message': 'Invalid password!'}), 401
+        if not user or not bcrypt.checkpw(auth['password'].encode('utf-8'), user['password_hash'].encode('utf-8')):
+            return jsonify({'message': 'Invalid email or password!'}), 401
+        token = jwt.encode({
+            'user_id': user['id'],
+            'exp': datetime.utcnow() + timedelta(hours=24)
+        }, app.config['SECRET_KEY'], algorithm="HS256")
+        return jsonify({'token': token})
     except Exception as e:
         return jsonify({'message': f'Login failed. Error: {e}'}), 500
     finally:
@@ -156,9 +126,7 @@ def login_user():
             cursor.close()
             connection.close()
 
-
 # --- Task CRUD API Routes (Protected) ---
-
 @app.route('/api/tasks', methods=['GET'])
 @token_required
 def get_all_tasks(current_user):
@@ -168,8 +136,6 @@ def get_all_tasks(current_user):
         cursor.execute("SELECT id, title, is_completed FROM tasks WHERE user_id = %s", (current_user['id'],))
         tasks = cursor.fetchall()
         return jsonify(tasks)
-    except Exception as e:
-        return jsonify({'message': f'Could not fetch tasks. Error: {e}'}), 500
     finally:
         if 'connection' in locals() and connection.is_connected():
             cursor.close()
@@ -180,23 +146,17 @@ def get_all_tasks(current_user):
 def create_task(current_user):
     data = request.get_json()
     title = data.get('title')
-
     if not title:
         return jsonify({'message': 'Title is required!'}), 400
-
     try:
         connection = cnx_pool.get_connection()
         cursor = connection.cursor(dictionary=True)
         cursor.execute("INSERT INTO tasks (title, user_id) VALUES (%s, %s)", (title, current_user['id']))
         new_task_id = cursor.lastrowid
         connection.commit()
-        
         cursor.execute("SELECT id, title, is_completed FROM tasks WHERE id = %s", (new_task_id,))
         new_task = cursor.fetchone()
-
         return jsonify(new_task), 201
-    except Exception as e:
-        return jsonify({'message': f'Could not create task. Error: {e}'}), 500
     finally:
         if 'connection' in locals() and connection.is_connected():
             cursor.close()
@@ -206,34 +166,25 @@ def create_task(current_user):
 @token_required
 def update_task(current_user, task_id):
     data = request.get_json()
-    
-    update_fields = []
-    params = []
+    update_fields, params = [], []
     if 'title' in data:
         update_fields.append("title = %s")
         params.append(data['title'])
     if 'is_completed' in data:
         update_fields.append("is_completed = %s")
         params.append(data['is_completed'])
-    
     if not update_fields:
         return jsonify({'message': 'No update data provided!'}), 400
-
     query = f"UPDATE tasks SET {', '.join(update_fields)} WHERE id = %s AND user_id = %s"
     params.extend([task_id, current_user['id']])
-    
     try:
         connection = cnx_pool.get_connection()
         cursor = connection.cursor()
         cursor.execute(query, tuple(params))
         connection.commit()
-        
         if cursor.rowcount == 0:
-            return jsonify({'message': 'Task not found or you do not have permission to edit it.'}), 404
-            
+            return jsonify({'message': 'Task not found or unauthorized.'}), 404
         return jsonify({'message': 'Task updated successfully!'})
-    except Exception as e:
-        return jsonify({'message': f'Could not update task. Error: {e}'}), 500
     finally:
         if 'connection' in locals() and connection.is_connected():
             cursor.close()
@@ -247,13 +198,9 @@ def delete_task(current_user, task_id):
         cursor = connection.cursor()
         cursor.execute("DELETE FROM tasks WHERE id = %s AND user_id = %s", (task_id, current_user['id']))
         connection.commit()
-        
         if cursor.rowcount == 0:
-            return jsonify({'message': 'Task not found or you do not have permission to delete it.'}), 404
-            
+            return jsonify({'message': 'Task not found or unauthorized.'}), 404
         return jsonify({'message': 'Task deleted successfully!'})
-    except Exception as e:
-        return jsonify({'message': f'Could not delete task. Error: {e}'}), 500
     finally:
         if 'connection' in locals() and connection.is_connected():
             cursor.close()
