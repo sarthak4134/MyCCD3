@@ -64,7 +64,8 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/auth/register', {
+                // Updated URL to point to your EC2 instance
+                const response = await fetch('http://13.60.76.151/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

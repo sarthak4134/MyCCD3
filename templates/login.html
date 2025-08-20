@@ -63,7 +63,9 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/auth/login', {
+                // The URL now points to your EC2 public IP address.
+                // Nginx forwards this to the correct API endpoint.
+                const response = await fetch('http://13.60.76.151/auth/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
