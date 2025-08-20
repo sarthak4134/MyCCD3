@@ -25,14 +25,6 @@ app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "your-fallback-super-secret-k
 
 # --- Database Connection Pool Setup ---
 try:
-    # --- TEMPORARY DEBUGGING CODE ---
-    # Hardcoding credentials to bypass the environment file.
-    db_config = {
-        "host": "dbinstnace.czu6gy4qghjk.eu-north-1.rds.amazonaws.com",
-        "user": "admin",
-        "password": "SarthakRoot",  # Use the correct case-sensitive password
-        "database": "ccd3",
-    }
     db_config = {
         "host": os.getenv("DB_HOST"),
         "user": os.getenv("DB_USER"),
@@ -43,8 +35,13 @@ try:
                                            pool_size=5,
                                            **db_config)
     print("Database connection pool created successfully.")
+# --- MODIFIED PART ---
+except pooling.mysql.connector.Error as err:
+    print(f"FATAL: A MySQL error occurred: {err}")
+    exit(1)
+# --- END MODIFIED PART ---
 except Exception as e:
-    print(f"FATAL: Could not connect to the database. Error: {e}")
+    print(f"FATAL: A generic error occurred: {e}")
     exit(1)
 
 # --- Routes to Serve Frontend Pages ---
