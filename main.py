@@ -35,11 +35,9 @@ try:
                                            pool_size=5,
                                            **db_config)
     print("Database connection pool created successfully.")
-# --- MODIFIED PART ---
 except pooling.mysql.connector.Error as err:
     print(f"FATAL: A MySQL error occurred: {err}")
     exit(1)
-# --- END MODIFIED PART ---
 except Exception as e:
     print(f"FATAL: A generic error occurred: {e}")
     exit(1)
