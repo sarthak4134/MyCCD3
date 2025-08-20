@@ -25,6 +25,14 @@ app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "your-fallback-super-secret-k
 
 # --- Database Connection Pool Setup ---
 try:
+    # --- TEMPORARY DEBUGGING CODE ---
+    # Hardcoding credentials to bypass the environment file.
+    db_config = {
+        "host": "dbinstnace.czu6gy4qghjk.eu-north-1.rds.amazonaws.com",
+        "user": "admin",
+        "password": "SarthakRoot",  # Use the correct case-sensitive password
+        "database": "ccd3",
+    }
     db_config = {
         "host": os.getenv("DB_HOST"),
         "user": os.getenv("DB_USER"),
