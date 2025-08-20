@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center h-screen">
+
+    <div class="w-full max-w-md">
+        <div class="bg-white shadow-2xl rounded-2xl p-8 space-y-6">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-slate-900">Create an Account</h1>
+                <p class="text-slate-500 mt-2">Get started with TaskFlow today!</p>
+            </div>
+
+            <!-- Registration Form -->
+            <form id="register-form" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-slate-700">Email Address</label>
+                    <input type="email" id="email" name="email" required
+                           class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
+                    <input type="password" id="password" name="password" required
+                           class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <button type="submit"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Message Placeholder -->
+            <div id="message" class="text-center text-sm font-medium"></div>
+
+            <div class="text-center">
+                <p class="text-sm text-slate-600">
+                    Already have an account? 
+                    <a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500">Sign in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const registerForm = document.getElementById('register-form');
+        const message = document.getElementById('message');
+
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            message.textContent = '';
+            message.className = 'text-center text-sm font-medium';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    message.textContent = 'Registration successful! Redirecting to login...';
+                    message.classList.add('text-green-600');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    message.textContent = data.message || 'Registration failed.';
+                    message.classList.add('text-red-500');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                message.textContent = 'An error occurred. Please try again.';
+                message.classList.add('text-red-500');
+            }
+        });
+    </script>
+
+</body>
+</html>

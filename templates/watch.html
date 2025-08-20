@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Video</title>
+    <style>
+        body {
+            background-color: #0F0F0F;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .video-player-container {
+            width: 70%;
+            max-width: 1280px;
+            margin-top: 20px;
+        }
+        video {
+            width: 100%;
+            border-radius: 15px;
+        }
+        .back-link {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #3ea6ff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Now Playing</h1>
+
+    <div class="video-player-container">
+        {% if video_url %}
+            <video controls autoplay src="{{ video_url }}"></video>
+        {% else %}
+            <p>Could not load video.</p>
+        {% endif %}
+    </div>
+
+    <a href="/" class="back-link">&larr; Back to Home</a>
+    
+</body>
+</html>
