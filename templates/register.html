@@ -19,10 +19,10 @@
             content: "";
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-image: url("background-image.png");
+            background-image: url("/static/images/background-image.png");
             background-size: cover;
             background-position: center;
-            opacity: 0.7; 
+            opacity: 0.1; 
             z-index: -1;
         }
         .form-container {
@@ -44,10 +44,10 @@
                     </svg>
                     TaskFlow
                 </h1>
-                <p class="text-slate-500 mt-4">Welcome back! Please sign in.</p>
+                <p class="text-slate-500 mt-4">Create your account to get started.</p>
             </div>
 
-            <form id="login-form" class="space-y-6">
+            <form id="register-form" class="space-y-6">
                 <div>
                     <label for="email" class="block text-sm font-medium text-slate-700">Email Address</label>
                     <input type="email" id="email" name="email" required autocomplete="email"
@@ -55,41 +55,44 @@
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password"
+                    <input type="password" id="password" name="password" required autocomplete="new-password"
                            class="mt-1 block w-full px-4 py-3 bg-white border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                 </div>
                 <div>
                     <button type="submit"
                             class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform hover:-translate-y-0.5 transition-all">
-                        Sign In
+                        Create Account
                     </button>
                 </div>
             </form>
             
-            <div id="error-message" class="text-center text-red-500 text-sm font-medium min-h-[20px]"></div>
+            <div id="message" class="text-center text-sm font-medium min-h-[20px]"></div>
 
             <div class="text-center">
                 <p class="text-sm text-slate-600">
-                    Don't have an account? 
-                    <a href="/register" class="font-medium text-indigo-600 hover:text-indigo-500 hover:underline">Sign up</a>
+                    Already have an account? 
+                    <a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500 hover:underline">Sign in</a>
                 </p>
             </div>
         </div>
     </div>
 
     <script>
-        const loginForm = document.getElementById('login-form');
-        const errorMessage = document.getElementById('error-message');
+        // Use an empty string for API_URL when served from the same domain
+        const API_URL = '';
+        const registerForm = document.getElementById('register-form');
+        const message = document.getElementById('message');
 
-        loginForm.addEventListener('submit', async (event) => {
+        registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            errorMessage.textContent = ''; 
+            message.textContent = '';
+            message.className = 'text-center text-sm font-medium min-h-[20px]';
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('http://13.60.76.151/auth/login', {
+                const response = await fetch(`${API_URL}/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
@@ -98,14 +101,19 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('authToken', data.token);
-                    window.location.href = '/';
+                    message.textContent = 'Registration successful! Redirecting to login...';
+                    message.classList.add('text-green-600');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
                 } else {
-                    errorMessage.textContent = data.message || 'Login failed. Please try again.';
+                    message.textContent = data.message || 'Registration failed.';
+                    message.classList.add('text-red-500');
                 }
             } catch (error) {
-                console.error('Login error:', error);
-                errorMessage.textContent = 'An error occurred. Please check your connection and try again.';
+                console.error('Registration error:', error);
+                message.textContent = 'An error occurred. Please try again.';
+                message.classList.add('text-red-500');
             }
         });
     </script>
