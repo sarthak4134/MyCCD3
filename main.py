@@ -85,18 +85,30 @@ def register_user():
     password = data.get('password')
     if not email or not password:
         return jsonify({'message': 'Email and password are required!'}), 400
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    
     try:
+        # It's good practice to encode the password once
+        password_bytes = password.encode('utf-8')
+        hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+        
         connection = cnx_pool.get_connection()
         cursor = connection.cursor()
+        
         cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
         if cursor.fetchone():
             return jsonify({'message': 'User with this email already exists!'}), 409
+            
         cursor.execute("INSERT INTO users (email, password_hash) VALUES (%s, %s)", (email, hashed_password.decode('utf-8')))
         connection.commit()
+        
         return jsonify({'message': 'New user created successfully!'}), 201
+        
     except Exception as e:
-        return jsonify({'message': f'Could not create user. Error: {e}'}), 500
+        # This will print the detailed error to your terminal
+        print(f"AN ERROR OCCURRED IN /auth/register: {e}") 
+        # Return a generic error message to the user
+        return jsonify({'message': 'Server error, could not create user.'}), 500
+        
     finally:
         if 'connection' in locals() and connection.is_connected():
             cursor.close()
