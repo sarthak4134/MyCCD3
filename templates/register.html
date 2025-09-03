@@ -5,93 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - TaskFlow</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            background-color: #1e293b; 
+            overflow: hidden;
+        }
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("background-image.png");
+            background-size: cover;
+            background-position: center;
+            opacity: 0.7; 
+            z-index: -1;
+        }
+        .form-container {
+            background-color: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
-<body class="bg-slate-100 flex items-center justify-center h-screen">
+<body class="flex items-center justify-center min-h-screen p-4">
 
     <div class="w-full max-w-md">
-        <div class="bg-white shadow-2xl rounded-2xl p-8 space-y-6">
+        <div class="form-container shadow-2xl rounded-2xl p-8 md:p-10 space-y-6 transform transition-all hover:scale-[1.01]">
             <div class="text-center">
-                <h1 class="text-3xl font-bold text-slate-900">Create an Account</h1>
-                <p class="text-slate-500 mt-2">Get started with TaskFlow today!</p>
+                 <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-indigo-600 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    TaskFlow
+                </h1>
+                <p class="text-slate-500 mt-4">Welcome back! Please sign in.</p>
             </div>
 
-            <!-- Registration Form -->
-            <form id="register-form" class="space-y-6">
+            <form id="login-form" class="space-y-6">
                 <div>
                     <label for="email" class="block text-sm font-medium text-slate-700">Email Address</label>
-                    <input type="email" id="email" name="email" required
-                           class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="email" id="email" name="email" required autocomplete="email"
+                           class="mt-1 block w-full px-4 py-3 bg-white border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
-                    <input type="password" id="password" name="password" required
-                           class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="password" id="password" name="password" required autocomplete="current-password"
+                           class="mt-1 block w-full px-4 py-3 bg-white border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                 </div>
                 <div>
                     <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Create Account
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform hover:-translate-y-0.5 transition-all">
+                        Sign In
                     </button>
                 </div>
             </form>
             
-            <!-- Message Placeholder -->
-            <div id="message" class="text-center text-sm font-medium"></div>
+            <div id="error-message" class="text-center text-red-500 text-sm font-medium min-h-[20px]"></div>
 
             <div class="text-center">
                 <p class="text-sm text-slate-600">
-                    Already have an account? 
-                    <a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500">Sign in</a>
+                    Don't have an account? 
+                    <a href="/register" class="font-medium text-indigo-600 hover:text-indigo-500 hover:underline">Sign up</a>
                 </p>
             </div>
         </div>
     </div>
 
     <script>
-        const registerForm = document.getElementById('register-form');
-        const message = document.getElementById('message');
+        const loginForm = document.getElementById('login-form');
+        const errorMessage = document.getElementById('error-message');
 
-        registerForm.addEventListener('submit', async (event) => {
+        loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            message.textContent = '';
-            message.className = 'text-center text-sm font-medium';
+            errorMessage.textContent = ''; 
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
             try {
-                // Updated URL to point to your EC2 instance
-                const response = await fetch('http://13.60.76.151/auth/register', {
+                const response = await fetch('http://13.60.76.151/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    message.textContent = 'Registration successful! Redirecting to login...';
-                    message.classList.add('text-green-600');
-                    setTimeout(() => {
-                        window.location.href = '/login';
-                    }, 2000);
+                    localStorage.setItem('authToken', data.token);
+                    window.location.href = '/';
                 } else {
-                    message.textContent = data.message || 'Registration failed.';
-                    message.classList.add('text-red-500');
+                    errorMessage.textContent = data.message || 'Login failed. Please try again.';
                 }
             } catch (error) {
-                console.error('Registration error:', error);
-                message.textContent = 'An error occurred. Please try again.';
-                message.classList.add('text-red-500');
+                console.error('Login error:', error);
+                errorMessage.textContent = 'An error occurred. Please check your connection and try again.';
             }
         });
     </script>
 
 </body>
 </html>
+
