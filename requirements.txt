@@ -12,6 +12,7 @@ Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
 greenlet==3.2.4
+gunicorn
 itsdangerous==2.2.0
 Jinja2==3.1.6
 jmespath==1.0.1
@@ -28,4 +29,5 @@ typing_extensions==4.14.1
 urllib3
 Werkzeug==3.1.3
 WTForms==3.2.1
+
 
