@@ -12,12 +12,10 @@
         body { 
             font-family: 'Inter', sans-serif;
             background-color: #1e293b; /* Dark slate background */
+            position: relative; /* This is needed for the pseudo-element */
         }
-        main {
-            position: relative;
-        }
-        /* The ::before pseudo-element creates the background layer */
-        main::before {
+        /* The ::before pseudo-element creates the background layer for the whole page */
+        body::before {
             content: "";
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -25,7 +23,7 @@
             background-size: cover;
             background-position: center;
             opacity: 0.1; /* Subtle texture opacity */
-            z-index: 0;
+            z-index: -1; /* Place it behind all other content */
         }
         .container {
             position: relative; /* Ensure content stays above the background */
